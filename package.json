@@ -1,0 +1,13 @@
+{
+  "name": "jitsi-info",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "f0x",
+  "license": "AGPL-3.0",
+  "dependencies": {
+    "bluebird": "^3.7.2",
+    "express": "^4.17.1",
+    "mqtt": "^4.2.6",
+    "puppeteer": "^8.0.0"
+  }
+}

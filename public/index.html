@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Document</title>
+</head>
+<body>
+	<script src='external_api.js'></script>
+	<script>
+		const a = console.log;
+		console.log = function() {
+			fetch(`/console?log=${JSON.stringify(arguments)}`)
+			a(...arguments);
+		}
+
+		// from underscore.js
+		function debounce(func, wait, immediate) {
+			var timeout;
+			return function() {
+				var context = this, args = arguments;
+				var later = function() {
+					timeout = null;
+					if (!immediate) func.apply(context, args);
+				};
+				var callNow = immediate && !timeout;
+				clearTimeout(timeout);
+				timeout = setTimeout(later, wait);
+				if (callNow) func.apply(context, args);
+			};
+		};
+
+		let lastNum = 0;
+
+		const api = new JitsiMeetExternalAPI("jitsi.nluug.nl", {
+			roomName: "revspace",
+		});
+		api.executeCommand('displayName', 'bar');
+		api.executeCommand('setVideoQuality', '240');
+		api.isVideoMuted().then((muted) => {
+			if (!muted) {
+				api.executeCommand('toggleVideo');
+			}
+		});
+		api.isAudioMuted().then((muted) => {
+			if (!muted) {
+				api.executeCommand('toggleAudio');
+			}
+		});
+		api.executeCommand('avatarUrl', 'https://cthu.lu/uploads/33c677341c350f25.png');
+		
+		let debouncedUpdate = debounce(function(num) {
+			console.log("number of participants:", num);
+			fetch(`/mqtt/?participants=${num}`);
+		}, 200);
+
+		function updateParticipants() {
+			let num = api.getNumberOfParticipants();
+			console.log(api.getParticipantsInfo())
+			function restart(reason) {
+				console.log("restarting due to", reason)
+				api.dispose();
+				setTimeout(() => {
+					window.location.reload(false);
+				}, 1000);
+			}
+			if (lastNum == 2 && num == 1) { // Last person left, disconnect to clear chat
+				restart("clear chat");
+			};
+
+			if (lastNum == 1 && num == 2) { // First person joined, disconnect to pass on moderator rights (only if we were the first one in)
+				let users = api.getParticipantsInfo();
+				if (users[0].formattedDisplayName.endsWith(" (me)")) {
+					restart("give moderator");
+				}
+			}
+			lastNum = num;
+			debouncedUpdate(num);
+		}
+
+		let events = ["videoConferenceJoined", "participantJoined", "participantLeft", "participantKickedOut"];
+		events.forEach((event) => {
+			api.on(event, updateParticipants);
+		});
+
+		setTimeout(() => {
+			let num = api.getNumberOfParticipants();
+		}, 2000);
+
+		window.addEventListener('beforeunload', () => {
+			console.log("unloading");
+			api.dispose();
+		});
+
+		console.log("loaded");
+	</script>
+</body>
+</html>
