@@ -7,7 +7,13 @@ const mqtt = require("mqtt");
 
 const port = 3199;
 const app = express();
-const mqttClient = mqtt.connect("mqtt://[2a0e:5700:4:11::53]");
+const mqttClient = mqtt.connect("mqtt://localhost", {
+	will: {
+		topic: "revspace/j",
+		payload: "E_BOT_STUK",
+		retain: true,
+	}
+});
 
 app.get("/mqtt", (req, res) => {
 	console.log("PARTICIPANTS", req.query.participants);
