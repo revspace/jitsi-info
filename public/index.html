@@ -35,9 +35,13 @@
 
 		const api = new JitsiMeetExternalAPI("jitsi.nluug.nl", {
 			roomName: "revspace",
+			configOverwrite: {
+				startWithVideoMuted: true,
+				startAudioOnly: true
+			}
 		});
 		api.executeCommand('displayName', 'bar');
-		api.executeCommand('setVideoQuality', '240');
+		api.executeCommand('setVideoQuality', '0');
 		api.isVideoMuted().then((muted) => {
 			if (!muted) {
 				api.executeCommand('toggleVideo');

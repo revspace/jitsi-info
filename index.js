@@ -38,7 +38,7 @@ let browser;
 
 Promise.try(() => {
 	return puppeteer.launch({
-		headless: true,
+		headless: false,
 		args: ["--no-sandbox"]
 	});
 }).then((res) => {
